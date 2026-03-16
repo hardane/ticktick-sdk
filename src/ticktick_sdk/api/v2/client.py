@@ -163,32 +163,42 @@ class TickTickV2Client(BaseTickTickClient):
         """Check if authenticated with a valid session."""
         return self._session_handler.is_authenticated
 
+    WEB_APP_VERSION = 8010
+
     def _get_x_device_header(self) -> str:
         """Get the x-device header JSON string.
 
-        Uses minimal format (based on pyticktick):
-        Only 3 fields: platform, version, id
+        Must match real TickTick web app to avoid 429 rate limits.
+        See: https://github.com/dev-mirzabicer/ticktick-sdk/pull/34
         """
         return json.dumps({
             "platform": "web",
-            "version": 6430,
+            "os": "Windows 10",
+            "device": "Chrome 134.0.0.0",
+            "channel": "website",
+            "version": self.WEB_APP_VERSION,
             "id": self._session_handler.device_id,
+            "campaign": "",
+            "websocket": "",
         })
 
-    # Simple User-Agent that works (based on pyticktick)
-    V2_USER_AGENT = "Mozilla/5.0 (rv:145.0) Firefox/145.0"
+    # Must mimic real browser to avoid TickTick's rate limiter
+    V2_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 
     def _get_auth_headers(self) -> dict[str, str]:
         """Get V2 authentication headers.
 
-        Uses minimal headers based on pyticktick's working approach.
+        Must include Origin/Referer to pass TickTick's AWS ELB-level filtering.
+        See: https://github.com/dev-mirzabicer/ticktick-sdk/pull/34
         """
-        headers: dict[str, str] = {}
+        headers: dict[str, str] = {
+            "Origin": "https://ticktick.com",
+            "Referer": "https://ticktick.com/",
+        }
 
         if self._session_handler.session is not None:
             session = self._session_handler.session
 
-            # Override with simple User-Agent for V2 API
             headers["User-Agent"] = self.V2_USER_AGENT
             headers["X-Device"] = self._get_x_device_header()
 

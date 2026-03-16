@@ -124,9 +124,11 @@ class SessionHandler:
         cookies = session.cookies
     """
 
-    # Minimal headers that work (based on pyticktick)
-    # Keep it simple - don't over-engineer with browser-exact headers
-    DEFAULT_USER_AGENT = "Mozilla/5.0 (rv:145.0) Firefox/145.0"
+    # Headers must mimic real browser to avoid TickTick's rate limiter (429s).
+    # See: https://github.com/dev-mirzabicer/ticktick-sdk/pull/34
+    DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
+
+    WEB_APP_VERSION = 8010
 
     def __init__(
         self,
@@ -171,27 +173,33 @@ class SessionHandler:
     def _get_x_device_header(self) -> str:
         """Get the x-device header JSON string.
 
-        Uses minimal format that works (based on pyticktick).
-        Only 3 fields: platform, version, id
+        Must match what the real TickTick web app sends to avoid 429 rate limits.
+        See: https://github.com/dev-mirzabicer/ticktick-sdk/pull/34
         """
         import json
 
         return json.dumps({
             "platform": "web",
-            "version": 6430,
+            "os": "Windows 10",
+            "device": "Chrome 134.0.0.0",
+            "channel": "website",
+            "version": self.WEB_APP_VERSION,
             "id": self.device_id,
+            "campaign": "",
+            "websocket": "",
         })
 
     def _get_headers(self) -> dict[str, str]:
         """Get headers for authentication requests.
 
-        Minimal headers - don't over-engineer with browser-exact headers.
-        The API just needs User-Agent and X-Device.
-        Content-Type is added automatically by httpx when using json=.
+        Must include Origin/Referer to pass TickTick's AWS ELB-level filtering.
+        See: https://github.com/dev-mirzabicer/ticktick-sdk/pull/34
         """
         return {
             "User-Agent": self.DEFAULT_USER_AGENT,
             "X-Device": self._get_x_device_header(),
+            "Origin": "https://ticktick.com",
+            "Referer": "https://ticktick.com/",
         }
 
     async def authenticate(
