@@ -1167,6 +1167,55 @@ class HabitCheckinsInput(BaseMCPInput):
 
 
 # =============================================================================
+# Comment Input Models
+# =============================================================================
+
+
+class CommentGetInput(BaseMCPInput):
+    """Input for getting comments on a task."""
+
+    task_id: str = Field(
+        ...,
+        description="Task identifier (24-character hex string)",
+        pattern=r"^[a-f0-9]{24}$",
+    )
+    project_id: str = Field(
+        ...,
+        description="Project ID the task belongs to (required for comment API)",
+        pattern=r"^(inbox\d+|[a-f0-9]{24})$",
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown' for human-readable, 'json' for machine-readable",
+    )
+
+
+class CommentCreateInput(BaseMCPInput):
+    """Input for creating a comment on a task."""
+
+    task_id: str = Field(
+        ...,
+        description="Task identifier (24-character hex string)",
+        pattern=r"^[a-f0-9]{24}$",
+    )
+    project_id: str = Field(
+        ...,
+        description="Project ID the task belongs to (required for comment API)",
+        pattern=r"^(inbox\d+|[a-f0-9]{24})$",
+    )
+    title: str = Field(
+        ...,
+        description="Comment text",
+        min_length=1,
+        max_length=5000,
+    )
+    response_format: ResponseFormat = Field(
+        default=ResponseFormat.MARKDOWN,
+        description="Output format: 'markdown' for human-readable, 'json' for machine-readable",
+    )
+
+
+# =============================================================================
 # Backward Compatibility Aliases (Deprecated - will be removed in v0.5.0)
 # =============================================================================
 

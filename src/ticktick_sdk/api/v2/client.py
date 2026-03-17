@@ -727,6 +727,69 @@ class TickTickV2Client(BaseTickTickClient):
         return response
 
     # =========================================================================
+    # Comment Endpoints
+    # =========================================================================
+
+    async def get_comments(
+        self,
+        project_id: str,
+        task_id: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Get comments on a task.
+
+        Args:
+            project_id: Project ID the task belongs to
+            task_id: Task ID to get comments for
+
+        Returns:
+            List of comment dicts
+        """
+        response = await self._get_json(
+            f"/project/{project_id}/task/{task_id}/comments",
+        )
+        return response
+
+    async def create_comment(
+        self,
+        project_id: str,
+        task_id: str,
+        title: str,
+        mentions: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a comment on a task.
+
+        Args:
+            project_id: Project ID the task belongs to
+            task_id: Task ID to comment on
+            title: Comment text
+            mentions: List of mention dicts with userId and atLabel
+
+        Returns:
+            Created comment dict
+        """
+        from ticktick_sdk.settings import _generate_object_id
+
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000+0000")
+        comment_id = _generate_object_id()
+
+        data: dict[str, Any] = {
+            "id": comment_id,
+            "title": title,
+            "createdTime": now,
+            "isNew": True,
+        }
+        if mentions:
+            data["mentions"] = mentions
+
+        response = await self._post(
+            f"/project/{project_id}/task/{task_id}/comment",
+            json_data=data,
+        )
+        return response.json() if response.content else {}
+
+    # =========================================================================
     # Project Endpoints
     # =========================================================================
 

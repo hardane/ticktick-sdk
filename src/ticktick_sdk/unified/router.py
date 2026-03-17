@@ -180,6 +180,15 @@ OPERATION_ROUTING: dict[str, OperationConfig] = {
         APIPreference.V2_ONLY,
         "V2-only feature",
     ),
+    # Comments
+    "get_comments": OperationConfig(
+        APIPreference.V2_ONLY,
+        "V2-only feature",
+    ),
+    "create_comment": OperationConfig(
+        APIPreference.V2_ONLY,
+        "V2-only feature",
+    ),
     # Sync
     "sync_all": OperationConfig(
         APIPreference.V2_ONLY,

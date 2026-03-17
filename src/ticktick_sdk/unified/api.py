@@ -2146,6 +2146,52 @@ class UnifiedTickTickAPI:
         return await self._v2_client.get_user_preferences()  # type: ignore
 
     # =========================================================================
+    # Comment Operations (V2 Only)
+    # =========================================================================
+
+    async def get_comments(
+        self,
+        project_id: str,
+        task_id: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Get comments on a task.
+
+        Args:
+            project_id: Project ID the task belongs to
+            task_id: Task ID
+
+        Returns:
+            List of comment dicts
+        """
+        self._ensure_initialized()
+        return await self._v2_client.get_comments(project_id, task_id)  # type: ignore
+
+    async def create_comment(
+        self,
+        project_id: str,
+        task_id: str,
+        title: str,
+        mentions: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a comment on a task.
+
+        Args:
+            project_id: Project ID the task belongs to
+            task_id: Task ID
+            title: Comment text
+            mentions: List of mention dicts
+
+        Returns:
+            Created comment dict
+        """
+        self._ensure_initialized()
+        return await self._v2_client.create_comment(  # type: ignore
+            project_id, task_id, title, mentions=mentions,
+        )
+
+    # =========================================================================
     # Focus/Pomodoro Operations (V2 Only)
     # =========================================================================
 

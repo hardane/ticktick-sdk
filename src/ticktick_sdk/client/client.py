@@ -1366,3 +1366,47 @@ class TickTickClient:
             if (task.title and query_lower in task.title.lower())
             or (task.content and query_lower in task.content.lower())
         ]
+
+    # =========================================================================
+    # Comments
+    # =========================================================================
+
+    async def get_comments(
+        self,
+        project_id: str,
+        task_id: str,
+    ) -> list[dict[str, Any]]:
+        """
+        Get comments on a task.
+
+        Args:
+            project_id: Project ID the task belongs to
+            task_id: Task ID
+
+        Returns:
+            List of comment dicts
+        """
+        return await self._api.get_comments(project_id, task_id)
+
+    async def create_comment(
+        self,
+        project_id: str,
+        task_id: str,
+        title: str,
+        mentions: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Create a comment on a task.
+
+        Args:
+            project_id: Project ID the task belongs to
+            task_id: Task ID
+            title: Comment text
+            mentions: List of mention dicts
+
+        Returns:
+            Created comment dict
+        """
+        return await self._api.create_comment(
+            project_id, task_id, title, mentions=mentions,
+        )

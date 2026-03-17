@@ -145,6 +145,9 @@ from ticktick_sdk.tools.inputs import (
     HabitDeleteInput,
     CheckinHabitsInput,
     HabitCheckinsInput,
+    # Comment inputs
+    CommentGetInput,
+    CommentCreateInput,
 )
 from ticktick_sdk.models import Habit, HabitSection
 from ticktick_sdk.tools.formatting import (
@@ -192,6 +195,10 @@ CHARACTER_LIMIT = 25000
 DEFAULT_TASK_LIMIT = 50
 DEFAULT_PROJECT_LIMIT = 100
 MAX_TASK_LIMIT = 200
+
+# Comment mention constants
+KOBA_MENTION = {"userId": 121816740, "atLabel": "@Karim Hardane"}
+KOBA_MENTION_PREFIX = "@Karim Hardane "
 
 
 # =============================================================================
@@ -2748,6 +2755,109 @@ async def ticktick_habit_checkins(params: HabitCheckinsInput, ctx: Context) -> s
 
     except Exception as e:
         return handle_error(e, "habit_checkins")
+
+
+# =============================================================================
+# Comment Tools
+# =============================================================================
+
+
+@mcp.tool(
+    name="ticktick_get_comments",
+    annotations={
+        "title": "Get Task Comments",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": True,
+    },
+)
+async def ticktick_get_comments(params: CommentGetInput, ctx: Context) -> str:
+    """
+    Get comments on a task.
+
+    Retrieves all comments for a specific task. Both project_id and task_id
+    are required.
+
+    Args:
+        params: Query parameters:
+            - task_id (str, required): Task identifier (24-char hex)
+            - project_id (str, required): Project ID the task belongs to
+            - response_format (str): 'markdown' (default) or 'json'
+
+    Returns:
+        List of comments with author and timestamp, or error message.
+    """
+    try:
+        client = get_client(ctx)
+        comments = await client.get_comments(params.project_id, params.task_id)
+
+        if params.response_format == ResponseFormat.MARKDOWN:
+            if not comments:
+                return "No comments on this task."
+            lines = [f"# Comments ({len(comments)})", ""]
+            for c in comments:
+                author = c.get("creator", {}).get("name", "Unknown")
+                created = c.get("createdTime", "")
+                title = c.get("title", "")
+                lines.append(f"- **{author}** ({created}): {title}")
+            return "\n".join(lines)
+        else:
+            return json.dumps(comments, indent=2)
+
+    except Exception as e:
+        return handle_error(e, "get_comments")
+
+
+@mcp.tool(
+    name="ticktick_create_comment",
+    annotations={
+        "title": "Create Task Comment",
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": True,
+    },
+)
+async def ticktick_create_comment(params: CommentCreateInput, ctx: Context) -> str:
+    """
+    Create a comment on a task.
+
+    Adds a comment to the specified task. The comment automatically
+    mentions @Karim Hardane for notification.
+
+    Both project_id and task_id are required.
+
+    Args:
+        params: Comment parameters:
+            - task_id (str, required): Task identifier (24-char hex)
+            - project_id (str, required): Project ID the task belongs to
+            - title (str, required): Comment text (1-5000 chars)
+            - response_format (str): 'markdown' (default) or 'json'
+
+    Returns:
+        Success confirmation or error message.
+    """
+    try:
+        client = get_client(ctx)
+
+        # Auto-prepend @Karim mention
+        comment_text = KOBA_MENTION_PREFIX + params.title
+
+        result = await client.create_comment(
+            project_id=params.project_id,
+            task_id=params.task_id,
+            title=comment_text,
+            mentions=[KOBA_MENTION],
+        )
+
+        if params.response_format == ResponseFormat.MARKDOWN:
+            return success_message(f"Comment added to task `{params.task_id}`.")
+        else:
+            return json.dumps(result, indent=2)
+
+    except Exception as e:
+        return handle_error(e, "create_comment")
 
 
 # =============================================================================
