@@ -99,6 +99,10 @@ TOOL_MODULES = {
         "ticktick_focus_heatmap",
         "ticktick_focus_by_tag",
     ],
+    "comments": [
+        "ticktick_get_comments",
+        "ticktick_create_comment",
+    ],
 }
 
 # All tool names for validation
